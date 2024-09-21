@@ -11,7 +11,7 @@ public class WeatherConfig {
 
     @Bean
     public WebClient clientConfig() {
-        return WebClient.builder().baseUrl("https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd3.php")
+        return WebClient.builder().baseUrl("https://apihub.kma.go.kr/")
                 .defaultHeader(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
