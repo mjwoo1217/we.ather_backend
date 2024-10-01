@@ -2,7 +2,10 @@ package com.example.we_ather_backend.domain.weather.service;
 
 import com.example.we_ather_backend.domain.weather.dto.LocationDTO;
 import com.example.we_ather_backend.domain.weather.dto.WeatherDTO;
+import com.example.we_ather_backend.domain.weather.entity.Location;
 import com.example.we_ather_backend.domain.weather.entity.Weather;
+import com.example.we_ather_backend.domain.weather.repository.LocationRepository;
+import com.example.we_ather_backend.domain.weather.repository.WeatherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -11,29 +14,38 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class WeatherService {
 
     private final WebClient webClient;
+    private final LocationRepository locationRepository;
+    private final WeatherRepository weatherRepository;
 
     @Value("${weather.api.key}")
     private String weather_apiKey;
 
+    // weather webclient
     public Mono<List<WeatherDTO>> getWeather() {
         return webClient.get().uri(uriBuilder -> uriBuilder
                         .path("api/typ01/url/kma_sfcdd3.php")
+                        .queryParam("tm1", "201512110100")
+                        .queryParam("tm2","201512140000")
                         .queryParam("authKey", weather_apiKey)
                         .build()
                 )
                 .retrieve()
                 .bodyToMono(byte[].class)
                 .map(bytes -> new String(bytes, Charset.forName("EUC-KR"))) // EUC-KR로 변환
-                .map(this::parseDate); // 데이터를 파싱하여 List<WeatherDTO>로 변환
+                .map(this::parseDate) // 데이터를 파싱하여 List<WeatherDTO>로 변환
+                .doOnNext(this::saveWeather); // 데이터 저장
     }
 
+    // weather 정보 변환
     private List<WeatherDTO> parseDate(String response) {
         List<WeatherDTO> weatherList = new ArrayList<>();
 
@@ -79,6 +91,22 @@ public class WeatherService {
         return weatherList;
     }
 
+    private void saveWeather(List<WeatherDTO> dtoList) {
+        List<Weather> entities = dtoList.stream().map(dto -> Weather.builder()
+                        .date(dto.getDate())
+                        .stn(dto.getStn())
+                        .taAvg(dto.getTaAvg())
+                        .taMax(dto.getTaMax())
+                        .taMin(dto.getTaMin())
+                        .caTot(dto.getCaTot())
+                        .rnDay(dto.getRnDay())
+                        .build())
+                .collect(Collectors.toList());
+
+        weatherRepository.saveAll(entities);
+    }
+
+    // location webclient
     public Mono<List<LocationDTO>> getLocation() {
         return webClient.get().uri(uriBuilder -> uriBuilder
                         .path("api/typ01/url/stn_inf.php")
@@ -88,9 +116,11 @@ public class WeatherService {
                 .retrieve()
                 .bodyToMono(byte[].class)
                 .map(bytes -> new String(bytes, Charset.forName("EUC-KR"))) // EUC-KR로 변환
-                .map(this::parseLocationDate); // 데이터를 파싱하여 List<WeatherDTO>로 변환
+                .map(this::parseLocationDate) // 데이터를 파싱하여 List<WeatherDTO>로 변환
+                .doOnNext(this::saveLocations); // 데이터 저장
     }
 
+    // location 정보 변환
     private List<LocationDTO> parseLocationDate(String response) {
         List<LocationDTO> locationList = new ArrayList<>();
 
@@ -131,4 +161,16 @@ public class WeatherService {
         }
         return locationList;
     }
+
+    private void saveLocations(List<LocationDTO> dtoList) {
+        List<Location> entities = dtoList.stream().map(dto -> Location.builder()
+                .stn(dto.getStn())
+                .name(dto.getName())
+                .enName(dto.getEnName())
+                .build())
+                .collect(Collectors.toList());
+
+        locationRepository.saveAll(entities);
+    }
+
 }
