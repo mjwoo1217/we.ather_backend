@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: we_ather_backend
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/weather
+    username: root
+    password: secret
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
+  batch:
+    job:
+#      name: weatherJob
+      enabled: false # batch작업 자동실행 여부 설정
+    jdbc:
+      initialize-schema: always # 데이터 베이스 스키마 초기화 옵션설정, 애플리케이션 시작 시 batch 관련 테이블 자동 생성
+
+# API KEY
+weather:
+  api:
+    key: ${W_API_KEY}

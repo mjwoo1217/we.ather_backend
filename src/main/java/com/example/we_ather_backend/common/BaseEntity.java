@@ -17,7 +17,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @MappedSuperclass
 @SuperBuilder
-public class BaseEntity extends BaseDateEntity implements Serializable {
+public abstract class BaseEntity extends BaseDateEntity implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
