@@ -19,10 +19,6 @@ public class WeatherDTO {
     private Double caTot;         // 일 평균 전운량 (1/10)
     private Double rnDay;         // 강수량
 
-//    public Weather of() {
-//        return new Weather();
-//    }
-
 public Weather of() {
     return new Weather(
             LocalDate.parse(this.date), // date 필드를 LocalDate로 변환
